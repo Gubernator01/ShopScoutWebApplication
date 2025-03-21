@@ -13,12 +13,14 @@ namespace ShopScoutWebApplication.Controllers
             _logger = logger;
         }
 
+        [Route("/")]
         public IActionResult Index()
         {
             return View();
         }
 
-        public IActionResult Privacy()
+        [Route("/about")]
+        public IActionResult About()
         {
             return View();
         }
