@@ -5,7 +5,7 @@
     /// </summary>
     public enum MarketName
     {
-        Ozon = 0,
+        Ozon = 0, // todo добавить магазинов
         Wildberries = 1
     }
     /// <summary>

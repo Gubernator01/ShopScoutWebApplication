@@ -1,5 +1,7 @@
 using CefSharp.OffScreen;
 using CefSharp;
+using ShopScoutWebApplication.Controllers;
+using ShopScoutWebApplication;
 
 internal class Program
 {
@@ -41,6 +43,13 @@ internal class Program
             });
             await next.Invoke();
         });
+        var test = new ParseController(LoggerFactory.Create(builder => builder.AddConsole()), new EmptyProductsDBController(LoggerFactory.Create(builder => builder.AddConsole())));
+        var task = test.ParseAsync("хочу то, не знаю что", Sort.Popular, [MarketName.Ozon, MarketName.Wildberries]);
+        task.Wait();
+        foreach (var item in task.Result)
+        {
+            Console.WriteLine($"{item.MarketName}, {item.Name}");
+        }
 
         app.Run();
         Cef.Shutdown();
