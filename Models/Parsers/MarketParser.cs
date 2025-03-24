@@ -6,6 +6,7 @@ namespace ShopScoutWebApplication.Models
     {
         protected ChromiumWebBrowser browser;
         protected string baseAdress = "";
+        protected const int REQUIRED_QUANTITY_OF_PRODUCTS = 200;
         public MarketParser()
         {
             browser = new ChromiumWebBrowser();

@@ -113,9 +113,20 @@ namespace ShopScoutWebApplication.Controllers
             }
             if (marketParser == null)
                 throw new ArgumentNullException("Доступного парсера для указанного магазина нет", nameof(marketParser));
-            var task = Task.Run(() => marketParser.Parse(searchText, sort));
-            await task;
-            return task.Result;
+            IEnumerable<Product> result;
+            try
+            {
+                var task = Task.Run(() => marketParser.Parse(searchText, sort));
+                await task;
+                result = task.Result;
+            }
+            catch (Exception e)
+            {
+                logger.LogError($"Исключение: {e.Message}. При парсинге \"{searchText}\" в магазине {marketName} сортировкой {sort}");
+                result = new List<Product>();
+            }
+
+            return result;
         }
     }
 }

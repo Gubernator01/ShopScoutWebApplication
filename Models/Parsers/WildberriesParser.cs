@@ -6,7 +6,7 @@ namespace ShopScoutWebApplication.Models
     {
         public WildberriesParser() : base()
         {
-            baseAdress = "https://www.wildberries.ru/";
+            baseAdress = "https://www.wildberries.ru";
         }
         public override IEnumerable<Product> Parse(string searchText, Sort sort)
         {
