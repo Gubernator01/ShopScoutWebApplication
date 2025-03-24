@@ -8,7 +8,7 @@ namespace ShopScoutWebApplication.Models
     {
         public OzonParser() : base()
         {
-            baseAdress = "https://www.ozon.ru";
+            baseAddress = "https://www.ozon.ru";
         }
         public override IEnumerable<Product> Parse(string searchText, Sort sort)
         {
@@ -33,7 +33,7 @@ namespace ShopScoutWebApplication.Models
                 default:
                     break;
             }
-            var URL = baseAdress + "/search/?" + preparedSearchText;
+            var URL = baseAddress + "/search/?" + preparedSearchText;
 
             browser.LoadUrlAsync(URL).Wait();
 
@@ -145,7 +145,7 @@ namespace ShopScoutWebApplication.Models
             foreach (var rawProduct in response)
             {
                 string Name = rawProduct.Name;
-                string ProductURI = baseAdress + rawProduct.ProductURN;
+                string ProductURI = baseAddress + rawProduct.ProductURN;
                 string ProductImageURI = rawProduct.ProductImageURI;
                 try                                                            // Полученный список сырой информации парсится в необходимый формат
                 {
