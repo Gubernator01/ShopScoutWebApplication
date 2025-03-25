@@ -205,7 +205,7 @@ namespace ShopScoutWebApplication.Models
             .GroupBy(p => p.ProductURI)
             .Select(g => g.First())
             .ToList();
-            if (products.Count < productCount - exceptionalProductsURI.Count && products.Count < REQUIRED_QUANTITY_OF_PRODUCTS)// Парится пока есть что парсить и не достиг необходимого количества
+            if (products.Count < productCount - exceptionalProductsURI.Count && products.Count < REQUIRED_QUANTITY_OF_PRODUCTS)// Парcится пока есть что парсить и не достиг необходимого количества
                 goto parse2;
             return products;
         }
