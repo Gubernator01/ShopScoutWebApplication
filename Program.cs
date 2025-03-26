@@ -11,7 +11,9 @@ internal class Program
         CefSharp.BrowserSubprocess.SelfHost.Main((string[])args.Clone());         // инициализация Cef
         var settings = new CefSettings()
         {
-            BrowserSubprocessPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName
+            BrowserSubprocessPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName,
+            AcceptLanguageList = "ru-RU,ru;q=0.9",
+            UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
         };
         settings.DisableGpuAcceleration();
         Cef.Initialize(settings, performDependencyCheck: false);

@@ -1,0 +1,113 @@
+﻿@{
+    ViewData["Title"] = "Результаты";
+    const int maxColsCount = 6;
+    var results = (APIV1Results)ViewBag.APIV1Results;
+    string text = (string)ViewBag.text;
+    bool ozon = (bool)ViewBag.ozon;
+    bool wb = (bool)ViewBag.wb;
+    Sort sort = (Sort)ViewBag.sort;
+    int count = (int)ViewBag.count;
+    int currentPage = (int)ViewBag.page;
+    int nextPage = currentPage + 1;
+    int previousPage = currentPage - 1;
+    if (previousPage < 0)
+        previousPage = 0;
+    int totalPages;
+    if (count > 0)
+    {
+        totalPages = results.Total / count;
+        if (results.Total % count != 0)
+            totalPages++;
+    }
+    else
+        totalPages = 0;
+}
+
+@{
+    if (results == null || results.Total == 0)
+    {
+        <h2 class="display-4 text-center">По вашему запросу ничего не найдено: попробуйте другие параметры <a asp-controller="Search" asp-action="Index" class="link-dark link-underline link-underline-opacity-0">поиска</a>.</h2>
+    }
+    else
+    {
+        <h2 class="display-4 text-center">По вашему запросу "@text" найдено @results.Total товаров</h2>
+        <div class="container-sm text-center">
+            @{
+                int rowsCount = results.Products.Count / maxColsCount;
+                if (results.Products.Count % maxColsCount != 0)
+                    rowsCount++;
+                for (int row = 0; row < rowsCount; row++)
+                {
+                    <div class="row">
+                        @for (int col = 0; col < maxColsCount; col++)
+                        {
+                            Product product;
+                            @try
+                            {
+                                product = results.Products[row * maxColsCount + col];
+                            }
+                            catch (ArgumentOutOfRangeException)
+                            {
+                                break;
+                            }
+                            <div class="col-12 col-md-6 col-lg-2 border overflow-auto bg-light">
+                                <div class="row">
+                                    <a href="@product.ProductURI"><img src="@product.ProductImageURI" class="img-fluid" alt="@product.Name"></a>
+                                </div>
+                                <div class="row">
+                                    <div class="col-1">
+                                        @switch (product.MarketName)
+                                        {
+                                            case MarketName.Ozon:
+                                                <img src="~/icons/ozon.ico" alt="@MarketName.Ozon" width="16" height="16">
+                                                break;
+                                            case MarketName.Wildberries:
+                                                <img src="~/icons/wb.ico" alt="@MarketName.Wildberries" width="16" height="16">
+                                                break;
+                                            default:
+                                                <img src="~/favicon.ico" width="16" height="16">
+                                                break;
+                                        }
+                                    </div>
+                                    <div class="col-11 text-start fs-4">
+                                        @product.Price ₽
+                                    </div>
+                                </div>
+                                <div class="overflow-auto" style="max-height: 100px;">
+                                    <a href="@product.ProductURI" class="link-dark link-underline link-underline-opacity-0 fs-6">@product.Name</a>
+                                </div>
+                                <div class="row">
+                                    <div class="col text-start fs-5">
+                                        Рейтинг: @product.Rating
+                                    </div>
+                                    <div class="col text-start fs-5">
+                                        Отзывов: @product.ReviewsCount
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+        <div>Страница @(currentPage + 1) из @totalPages</div>
+        <form method="get" asp-controller="Search" asp-action="Result">
+            <input type="hidden" value="@text" name="text" />
+            <input type="hidden" value="@ozon.ToString()" name="ozon" />
+            <input type="hidden" value="@wb.ToString()" name="wb" />
+            <input type="hidden" value="@sort" name="sort" />
+            <input type="hidden" value="@nextPage" name="page" />
+            <input type="hidden" value="@count" name="count" />
+            <button class="btn btn-primary" type="submit">Далее</button>
+        </form>
+        <form method="get" asp-controller="Search" asp-action="Result">
+            <input type="hidden" value="@text" name="text" />
+            <input type="hidden" value="@ozon.ToString()" name="ozon" />
+            <input type="hidden" value="@wb.ToString()" name="wb" />
+            <input type="hidden" value="@sort" name="sort" />
+            <input type="hidden" value="@previousPage" name="page" />
+            <input type="hidden" value="@count" name="count" />
+            <button class="btn btn-primary" type="submit">Назад</button>
+        </form>
+    }
+}

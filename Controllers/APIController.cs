@@ -24,7 +24,7 @@ namespace ShopScoutWebApplication.Controllers
         public async Task<IResult> v1(string text, bool ozon, bool wb, Sort sort, int page, int count)
         {
             List<Product> resultProducts = new List<Product>();                          // Результирующая коллекция
-            if (count == 0 || string.IsNullOrWhiteSpace(text))
+            if (count <= 0 || page < 0 || string.IsNullOrWhiteSpace(text))
             {
                 logger.LogError($"Получен неверный запрос \"{text}, ozon:{ozon}, wb:{wb}, sort:{sort}\"");
                 Response.StatusCode = 400;
@@ -32,6 +32,7 @@ namespace ShopScoutWebApplication.Controllers
             }
             List<Product> cacheProducts = new List<Product>();                           // Рабочая коллекция, должна быть закэширована
             int offset = page * count;                                                   // Смещение индекса коллекции с начала
+            text = text.ToLower();
             string keyString = text + ozon + wb + sort;
             if (!memoryCache.TryGetValue(keyString, out cacheProducts))                  // Если в кэше не найден запрос, то он парсится, сортируется и кэшируется
             {

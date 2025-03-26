@@ -48,6 +48,7 @@ namespace ShopScoutWebApplication.Controllers
                 return products;
             var uniqueMarkets = markets.Distinct();                                      // Проверка на наличие элементов в массиве магазинов для поиска, получение списка его уникальных элементов  
 
+            searchText = searchText.ToLower();
             var tasksFromDB = new List<Task<IEnumerable<Product>?>>();
             foreach (var market in uniqueMarkets)
             {

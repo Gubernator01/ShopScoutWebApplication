@@ -1,0 +1,45 @@
+﻿@{
+    ViewData["Title"] = "Поиск";
+}
+
+<div class="text-center">
+    <h2 class="display-4">Введите необходимые параметры поиска</h2>
+</div>
+<div class="container-sm">
+    <form method="get" asp-controller="Search" asp-action="Result">
+        <p class="text-center">
+            <div class="form-floating mb-3 mx-auto" style="width: 300px;">
+                <input id="floatingInput" class="form-control" type="text" name="text" placeholder="Текст поиска" />
+                <label for="floatingInput">Запрос</label>
+            </div>
+        </p>
+        <p class="text-center">
+            <label class="form-check-label">Ozon</label>
+            <input class="form-check-input" type="checkbox" value="true" name="ozon" />
+        </p>
+        <p class="text-center">
+            <label class="form-check-label">Wildberries</label>
+            <input class="form-check-input" type="checkbox" value="true" name="wb" />
+        </p>
+        <p class="text-center">
+            <div class="form-floating mx-auto" style="width: 200px;">
+                <select class="form-select" id="floatingSelect" name="sort">
+                    <option value="0">По популярности</option>
+                    <option value="2">По возрастанию цены</option>
+                    <option value="1">По убыванию цены</option>
+                    <option value="3">По рейтингу</option>
+                </select>
+                <label for="floatingSelect">Сортировка</label>
+            </div>
+        </p>
+        <p class="text-center">
+            <input type="hidden" name="page" value="0" />
+            <input type="hidden" name="count" value="36" />
+            <button class="btn btn-primary" type="submit">Поиск</button>
+        </p>
+    </form>
+    <div class="text-center">
+        <h4 class="display-4">Первичный поиск может занять некоторое время</h4>
+    </div>
+</div>
+
