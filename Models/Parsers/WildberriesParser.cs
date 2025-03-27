@@ -76,7 +76,7 @@ namespace ShopScoutWebApplication.Models
                 int page = 1;
                 string URL;
                 int productCount;
-                int secondsCount = 0;
+                int secondsCount;
             newPage:
                 if (page == 1)
                     URL = FirstPartOfURL + preparedSearchText;
@@ -91,13 +91,14 @@ namespace ShopScoutWebApplication.Models
                 else
                     expectedProductCount = remainingProductCount;
                 if (expectedProductCount <= 0) return products;
-                parse:
+                secondsCount = 0;
+            parse:
                 var scriptTask = browser.EvaluateScriptAsync(scrollScript);              // Проматывание страницы
                 scriptTask.Wait();
                 if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
                 {
                     Task.Delay(1000).Wait();
-                    if (secondsCount == 5)                                               // Совершается 5 попыток с паузой в секунду для загрузки страницы
+                    if (secondsCount == 10)                                               // Совершается 10 попыток с паузой в секунду для загрузки страницы
                         throw new Exception("Неудачный парс");
                     secondsCount++;
                     goto parse;
@@ -106,7 +107,7 @@ namespace ShopScoutWebApplication.Models
 
                 if (scrollScriptResponse != expectedProductCount)
                 {
-                    Task.Delay(100).Wait();
+                    Task.Delay(200).Wait();
                     goto parse;
                 }
 
@@ -115,7 +116,7 @@ namespace ShopScoutWebApplication.Models
                 if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null || ((List<dynamic>)scriptTask.Result.Result).Count == 0)
                 {
                     Task.Delay(1000).Wait();
-                    if (secondsCount == 5)
+                    if (secondsCount == 10)
                         throw new Exception("Неудачный парс");
                     secondsCount++;
                     goto parse;
@@ -192,16 +193,20 @@ namespace ShopScoutWebApplication.Models
                     page++;
                     goto newPage;
                 }
-                return products;
             }
             catch (Exception)
             {
                 throw;
             }
+            browser.Dispose();
+            browser = new CefSharp.OffScreen.ChromiumWebBrowser();
+            return products;
         }
 
         private int FirstLoadOfPage(string URL)
         {
+            int attempt = 0;
+        start:
             browser.LoadUrlAsync(URL).Wait();
 
             int secondsCount = 0;
@@ -215,20 +220,20 @@ namespace ShopScoutWebApplication.Models
                         }
                         return null;
                       })()";
-        start:
+        parse:
             var scriptTask = browser.EvaluateScriptAsync(script);
             scriptTask.Wait();
             if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
             {
                 Task.Delay(1000).Wait();
-                if (secondsCount == 5)                                         // Совершается 5 попыток с паузой в секунду для загрузки страницы
+                if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
                     throw new Exception("Неудачный парс");
                 secondsCount++;
-                goto start;
+                goto parse;
             }
 
             string taskResult = (string)scriptTask.Result.Result;
-            var firstTaskResultSplited = taskResult.Split([' ', '\u2009'], '\u00A0');
+            var firstTaskResultSplited = taskResult.Split([' ', '\u2009', '\u00A0']);
             string productCountString = "";
             foreach (var item in firstTaskResultSplited)                       // Парс количества товаров в результате поиска
             {
@@ -243,6 +248,11 @@ namespace ShopScoutWebApplication.Models
                 return 0;
             }
             var productCount = int.Parse(productCountString);                  // Доступное количество товаров
+            if (productCount == 0 && attempt < 10)
+            {
+                attempt++;
+                goto start;                                                    // Иногда WB может не выдать товары просто так
+            }
 
             return productCount;
         }

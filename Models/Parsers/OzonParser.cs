@@ -59,7 +59,7 @@ namespace ShopScoutWebApplication.Models
             if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
             {
                 Task.Delay(1000).Wait();
-                if (secondsCount == 5)                                         // Совершается 5 попыток с паузой в секунду для загрузки страницы
+                if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
                     throw new Exception("Неудачный парс");
                 secondsCount++;
                 goto parse1;
@@ -135,7 +135,7 @@ namespace ShopScoutWebApplication.Models
             if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null || ((List<dynamic>)scriptTask.Result.Result).Count == 0)
             {
                 Task.Delay(1000).Wait();
-                if (secondsCount == 5)                                         // Совершается 5 попыток с паузой в секунду для загрузки страницы
+                if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
                     throw new Exception("Неудачный парс");
                 secondsCount++;
                 goto parse2;
@@ -206,7 +206,12 @@ namespace ShopScoutWebApplication.Models
             .Select(g => g.First())
             .ToList();
             if (products.Count < productCount - exceptionalProductsURI.Count && products.Count < REQUIRED_QUANTITY_OF_PRODUCTS)// Парcится пока есть что парсить и не достиг необходимого количества
+            {
+                Task.Delay(500).Wait();
                 goto parse2;
+            }
+            browser.Dispose();
+            browser = new CefSharp.OffScreen.ChromiumWebBrowser();
             return products;
         }
     }

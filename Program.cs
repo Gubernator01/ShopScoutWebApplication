@@ -44,7 +44,7 @@ internal class Program
             {
                 var logger = context.RequestServices.GetService<ILogger<Program>>();
                 if (logger != null)
-                    logger.LogInformation($"Connection: RemoteIpAddress:{context.Connection.RemoteIpAddress}, RemotePort:{context.Connection.RemotePort}, LocalIpAddress:{context.Connection.LocalIpAddress}, LocalPort:{context.Connection.LocalPort}, Path:{context.Request.Path}");
+                    logger.LogInformation($"|{DateTime.Now}| Connection: RemoteIpAddress:{context.Connection.RemoteIpAddress}, RemotePort:{context.Connection.RemotePort}, LocalIpAddress:{context.Connection.LocalIpAddress}, LocalPort:{context.Connection.LocalPort}, Path:{context.Request.Path}");
             });
             await next.Invoke();
         });
