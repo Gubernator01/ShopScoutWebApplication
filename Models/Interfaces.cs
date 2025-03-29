@@ -34,4 +34,23 @@ namespace ShopScoutWebApplication
         /// <returns>отсортированная коллекция</returns>
         public IEnumerable<Product> Sort(IEnumerable<Product> products, Sort sort);
     }
+    public interface IParseController
+    {
+        /// <summary>
+        /// Получить список товаров из магазинов
+        /// </summary>
+        /// <param name="searchText">Текст поиска</param>
+        /// <param name="sort">Способ сортировки</param>
+        /// <param name="markets">Необходимые магазины</param>
+        /// <returns>Список товаров</returns>
+        IEnumerable<Product> Parse(string searchText, Sort sort, MarketName[] markets);
+        /// <summary>
+        /// Асинхронно получить список товаров из магазинов
+        /// </summary>
+        /// <param name="searchText">Текст поиска</param>
+        /// <param name="sort">Способ сортировки</param>
+        /// <param name="markets">Необходимые магазины</param>
+        /// <returns>Список товаров</returns>
+        Task<IEnumerable<Product>> ParseAsync(string searchText, Sort sort, MarketName[] markets);
+    }
 }

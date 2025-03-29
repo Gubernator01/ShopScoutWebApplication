@@ -64,19 +64,24 @@ namespace ShopScoutWebApplication.Models
                 secondsCount++;
                 goto parse1;
             }
-
-            string firstTaskResult = (string)scriptTask.Result.Result;
-            var firstTaskResultSplited = firstTaskResult.Split([' ', '\u2009'], '\u00A0');
-            string productCountString = "";
+            
+            string firstTaskResult = (string)scriptTask.Result.Result; Console.WriteLine("\n\n\n\n" + firstTaskResult + "\n\n\n\n");
+            var firstTaskResultSplited = firstTaskResult.Split([' ', '\u2009', '\u00A0']);
+            string? productCountString = "";
             foreach (var item in firstTaskResultSplited)                       // Парс количества товаров в результате поиска
             {
                 if (int.TryParse(item, out int _))
                 {
                     productCountString += item;
                 }
+                else
+                {
+                    productCountString += " ";
+                }
             }
+            productCountString = productCountString.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
 
-            if (productCountString == "")                                      // Если ничего нет, то возвращается пустой список
+            if (string.IsNullOrWhiteSpace(productCountString))                 // Если ничего нет, то возвращается пустой список
             {
                 return products;
             }

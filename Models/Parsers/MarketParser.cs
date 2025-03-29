@@ -9,7 +9,7 @@ namespace ShopScoutWebApplication.Models
         /// <summary>
         /// Достаточное количество товаров с магазина
         /// </summary>
-        protected const int REQUIRED_QUANTITY_OF_PRODUCTS = 100;
+        protected const int REQUIRED_QUANTITY_OF_PRODUCTS = 50;
         public MarketParser()
         {
             browser = new ChromiumWebBrowser();

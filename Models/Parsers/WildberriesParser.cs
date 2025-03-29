@@ -36,11 +36,16 @@ namespace ShopScoutWebApplication.Models
 
             try
             {
-                var scrollScript = @"
+                var scrollDownScript = @"
                     (function(){
-                        window.scrollBy({ top: 500, left: 0});
+                        window.scrollBy({ top: 10000, left: 0});
                         const cards = document.querySelectorAll('[data-card-index]');
                         return cards.length; 
+                      })()";
+                var scrollUpScript = @"
+                    (function(){
+                        window.scrollBy({ top: -100, left: 0});
+                        return window.pageYOffset; 
                       })()";
                 var parseScript = @"
                     (function(){
@@ -86,14 +91,20 @@ namespace ShopScoutWebApplication.Models
                 if (productCount == 0) return products;
                 int remainingProductCount = productCount - PRODUCTS_IN_ONE_PAGE * (page - 1);
                 int expectedProductCount;
-                if (remainingProductCount > PRODUCTS_IN_ONE_PAGE)
-                    expectedProductCount = PRODUCTS_IN_ONE_PAGE;
+                if (remainingProductCount > PRODUCTS_IN_ONE_PAGE || remainingProductCount > REQUIRED_QUANTITY_OF_PRODUCTS)
+                {
+                    if (REQUIRED_QUANTITY_OF_PRODUCTS < PRODUCTS_IN_ONE_PAGE)
+                        expectedProductCount = REQUIRED_QUANTITY_OF_PRODUCTS;
+                    else
+                        expectedProductCount = PRODUCTS_IN_ONE_PAGE;
+                }
                 else
                     expectedProductCount = remainingProductCount;
                 if (expectedProductCount <= 0) return products;
                 secondsCount = 0;
+                int oldScrollScriptResponse = -1;
             parse:
-                var scriptTask = browser.EvaluateScriptAsync(scrollScript);              // Проматывание страницы
+                var scriptTask = browser.EvaluateScriptAsync(scrollDownScript);              // Проматывание страницы
                 scriptTask.Wait();
                 if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
                 {
@@ -104,10 +115,20 @@ namespace ShopScoutWebApplication.Models
                     goto parse;
                 }
                 var scrollScriptResponse = (int)scriptTask.Result.Result;
-
-                if (scrollScriptResponse != expectedProductCount)
+                
+                if (scrollScriptResponse < expectedProductCount)
                 {
-                    Task.Delay(200).Wait();
+                    Task.Delay(100).Wait();
+                    if (oldScrollScriptResponse == scrollScriptResponse)
+                        while (true)
+                        {
+                            Task.Delay(100).Wait();
+                            scriptTask = browser.EvaluateScriptAsync(scrollUpScript);
+                            scriptTask.Wait();
+                            if ((int)scriptTask.Result.Result == 0)
+                                break;
+                        }
+                    oldScrollScriptResponse = scrollScriptResponse;
                     goto parse;
                 }
 
@@ -205,12 +226,37 @@ namespace ShopScoutWebApplication.Models
 
         private int FirstLoadOfPage(string URL)
         {
-            int attempt = 0;
-        start:
             browser.LoadUrlAsync(URL).Wait();
 
             int secondsCount = 0;
             var script = @"
+                    (function(){
+                        const not_found_results = document.querySelector('div.catalog-page__not-found');
+                        const searching_results = document.querySelector('span.searching-results__count');
+                        if(not_found_results != null) {
+                            return false; 
+                        }
+                        if(searching_results != null) {
+                            return true; 
+                        }
+                        return null;
+                      })()";
+        parse1:
+            var scriptTask = browser.EvaluateScriptAsync(script);
+            scriptTask.Wait();
+            if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
+            {
+                Task.Delay(1000).Wait();
+                if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
+                    throw new Exception("Неудачный парс");
+                secondsCount++;
+                goto parse1;
+            }
+            bool resultsExist = (bool)scriptTask.Result.Result;
+            if (!resultsExist) return 0;
+
+            secondsCount = 0;
+            script = @"
                     (function(){
                         const searching_results = document.querySelector('span.searching-results__count');
                         let result = """";
@@ -220,8 +266,8 @@ namespace ShopScoutWebApplication.Models
                         }
                         return null;
                       })()";
-        parse:
-            var scriptTask = browser.EvaluateScriptAsync(script);
+        parse2:
+            scriptTask = browser.EvaluateScriptAsync(script);
             scriptTask.Wait();
             if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
             {
@@ -229,7 +275,7 @@ namespace ShopScoutWebApplication.Models
                 if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
                     throw new Exception("Неудачный парс");
                 secondsCount++;
-                goto parse;
+                goto parse2;
             }
 
             string taskResult = (string)scriptTask.Result.Result;
@@ -243,16 +289,15 @@ namespace ShopScoutWebApplication.Models
                 }
             }
 
-            if (productCountString == "")
+            if (productCountString == "" || productCountString == "0")
             {
-                return 0;
+                Task.Delay(1000).Wait();
+                if (secondsCount == 10)
+                    throw new Exception("Неудачный парс");
+                secondsCount++;
+                goto parse2;
             }
             var productCount = int.Parse(productCountString);                  // Доступное количество товаров
-            if (productCount == 0 && attempt < 10)
-            {
-                attempt++;
-                goto start;                                                    // Иногда WB может не выдать товары просто так
-            }
 
             return productCount;
         }

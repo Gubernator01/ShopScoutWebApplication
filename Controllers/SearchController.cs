@@ -9,11 +9,14 @@ namespace ShopScoutWebApplication.Controllers
         private readonly ILogger<SearchController> _logger;
         private HttpClient httpClient;
         private const string APIURL = "http://127.0.0.1/api/v1";
+        private int maxRequestsCount;
 
-        public SearchController(ILogger<SearchController> logger)
+        public SearchController(ILogger<SearchController> logger, IConfiguration Configuration)
         {
             _logger = logger;
-            httpClient = new HttpClient();
+            httpClient = new HttpClient() { Timeout = TimeSpan.FromMinutes(3) };
+            if (!int.TryParse(Configuration["Search:MaxRequests"], out maxRequestsCount))
+                maxRequestsCount = 1;
         }
         [Route("/search")]
         public async Task<IActionResult> Index()
@@ -22,11 +25,25 @@ namespace ShopScoutWebApplication.Controllers
         }
         public async Task<IActionResult> Result(string text, bool ozon, bool wb, Sort sort, int page, int count)
         {
+            if (GlobalVariables.SearchRequestsCount >= maxRequestsCount)
+                return View("Deny");
             if (string.IsNullOrWhiteSpace(text))
                 text = "";
             string URL = APIURL + "/?text=" + text.Replace(" ", "+") + "&ozon=" + ozon + "&wb=" + wb + "&sort=" + sort + "&page=" + page + "&count=" + count;
-            var response = await httpClient.GetAsync(URL);
-            var results = await response.Content.ReadFromJsonAsync<APIV1Results>();
+            HttpResponseMessage? response = null;
+            APIV1Results? results;
+            GlobalVariables.SearchRequestsCount++;
+            try
+            {
+                response = await httpClient.GetAsync(URL);
+                results = await response.Content.ReadFromJsonAsync<APIV1Results>();
+            }
+            catch (Exception)
+            {
+                _logger.LogError("Таймаут");
+                results = null;
+            }
+            GlobalVariables.SearchRequestsCount--;
 
             ViewBag.APIV1Results = results;
             ViewBag.text = text;
@@ -36,7 +53,13 @@ namespace ShopScoutWebApplication.Controllers
             ViewBag.page = page;
             ViewBag.count = count;
             Response.Headers.CacheControl = "max-age=36000, public";
-            Response.StatusCode = (int)response.StatusCode;
+            if (response != null)
+                Response.StatusCode = (int)response.StatusCode;
+            else
+            {
+                Response.StatusCode = 524;
+                View("ServerError5xx", 524);
+            }
             return View();
         }
     }

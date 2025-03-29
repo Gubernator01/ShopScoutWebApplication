@@ -10,14 +10,14 @@ namespace ShopScoutWebApplication.Controllers
         private readonly ILogger logger;
         private readonly IMemoryCache memoryCache;
         private readonly IProductSorter productSorter;
-        private readonly ParseController parseController;
+        private readonly IParseController parseController;
         private readonly int cacheExpirationTime;                                        // Время актуальности кэша, по умолчанию 30 минут
-        public APIController(ILoggerFactory LoggerFactory, IMemoryCache MemoryCache, IProductSorter ProductSorter, IProductsDBController ProductsDBController, IConfiguration Configuration)
+        public APIController(ILoggerFactory LoggerFactory, IMemoryCache MemoryCache, IProductSorter ProductSorter, IConfiguration Configuration, IParseController ParseController)
         {
             logger = LoggerFactory.CreateLogger<APIController>();
             memoryCache = MemoryCache;
             productSorter = ProductSorter;
-            parseController = new ParseController(LoggerFactory, ProductsDBController);
+            parseController = ParseController;
             if (!int.TryParse(Configuration["Cache:ExpirationTimeInMinutes"], out cacheExpirationTime))
                 cacheExpirationTime = 30;
         }

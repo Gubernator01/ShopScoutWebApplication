@@ -9,7 +9,7 @@ namespace ShopScoutWebApplication.Controllers
     /// Контроллер для парсеров и БД
     /// </summary>
     [NonController]
-    public class ParseController
+    public class ParseController : IParseController
     {
         private ILogger logger;
         private IProductsDBController productsDBController;

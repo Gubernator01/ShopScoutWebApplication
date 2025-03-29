@@ -1,35 +1,33 @@
 ﻿@{
     ViewData["Title"] = "Результаты";
-    const int maxColsCount = 6;
     var results = (APIV1Results)ViewBag.APIV1Results;
-    string text = (string)ViewBag.text;
-    bool ozon = (bool)ViewBag.ozon;
-    bool wb = (bool)ViewBag.wb;
-    Sort sort = (Sort)ViewBag.sort;
-    int count = (int)ViewBag.count;
-    int currentPage = (int)ViewBag.page;
-    int nextPage = currentPage + 1;
-    int previousPage = currentPage - 1;
-    if (previousPage < 0)
-        previousPage = 0;
-    int totalPages;
-    if (count > 0)
-    {
-        totalPages = results.Total / count;
-        if (results.Total % count != 0)
-            totalPages++;
-    }
-    else
-        totalPages = 0;
-}
-
-@{
     if (results == null || results.Total == 0)
     {
         <h2 class="display-4 text-center">По вашему запросу ничего не найдено: попробуйте другие параметры <a asp-controller="Search" asp-action="Index" class="link-dark link-underline link-underline-opacity-0">поиска</a>.</h2>
     }
     else
     {
+        const int maxColsCount = 6;
+        string text = (string)ViewBag.text;
+        bool ozon = (bool)ViewBag.ozon;
+        bool wb = (bool)ViewBag.wb;
+        Sort sort = (Sort)ViewBag.sort;
+        int count = (int)ViewBag.count;
+        int currentPage = (int)ViewBag.page;
+        int nextPage = currentPage + 1;
+        int previousPage = currentPage - 1;
+        if (previousPage < 0)
+            previousPage = 0;
+        int totalPages;
+        if (count > 0)
+        {
+            totalPages = results.Total / count;
+            if (results.Total % count != 0)
+                totalPages++;
+        }
+        else
+            totalPages = 0;
+
         <h2 class="display-4 text-center">По вашему запросу "@text" найдено @results.Total товаров</h2>
         <div class="container-sm text-center">
             @{

@@ -21,8 +21,9 @@ internal class Program
         var builder = WebApplication.CreateBuilder(args);                         // инициализация самого приложения
         builder.Services.AddMemoryCache();
         builder.Services.AddControllersWithViews();
-        builder.Services.AddTransient<IProductSorter, ProductSorter>();
+        builder.Services.AddSingleton<IProductSorter, ProductSorter>();
         builder.Services.AddTransient<IProductsDBController, EmptyProductsDBController>();
+        builder.Services.AddSingleton<IParseController, ParseController>();
 
         var app = builder.Build();
         if (!app.Environment.IsDevelopment())
