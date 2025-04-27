@@ -5,7 +5,7 @@ namespace ShopScoutWebApplication.Models
     public class WildberriesParser : MarketParser
     {
         protected const int PRODUCTS_IN_ONE_PAGE = 100;
-        public WildberriesParser() : base()
+        public WildberriesParser(IConfiguration Configuration) : base(Configuration)
         {
             baseAddress = "https://www.wildberries.ru";
         }
@@ -109,7 +109,7 @@ namespace ShopScoutWebApplication.Models
                 if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
                 {
                     Task.Delay(1000).Wait();
-                    if (secondsCount == 10)                                               // Совершается 10 попыток с паузой в секунду для загрузки страницы
+                    if (secondsCount == SECONDS_BEFORE_TIMEOUT)                              // Совершается несколько попыток с паузой в секунду для загрузки страницы
                         throw new Exception("Неудачный парс");
                     secondsCount++;
                     goto parse;
@@ -137,7 +137,7 @@ namespace ShopScoutWebApplication.Models
                 if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null || ((List<dynamic>)scriptTask.Result.Result).Count == 0)
                 {
                     Task.Delay(1000).Wait();
-                    if (secondsCount == 10)
+                    if (secondsCount == SECONDS_BEFORE_TIMEOUT)
                         throw new Exception("Неудачный парс");
                     secondsCount++;
                     goto parse;
@@ -247,7 +247,7 @@ namespace ShopScoutWebApplication.Models
             if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
             {
                 Task.Delay(1000).Wait();
-                if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
+                if (secondsCount == SECONDS_BEFORE_TIMEOUT)                                      // Совершается несколько попыток с паузой в секунду для загрузки страницы
                     throw new Exception("Неудачный парс");
                 secondsCount++;
                 goto parse1;
@@ -272,7 +272,7 @@ namespace ShopScoutWebApplication.Models
             if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
             {
                 Task.Delay(1000).Wait();
-                if (secondsCount == 10)                                        // Совершается 10 попыток с паузой в секунду для загрузки страницы
+                if (secondsCount == SECONDS_BEFORE_TIMEOUT)                                  // Совершается несколько попыток с паузой в секунду для загрузки страницы
                     throw new Exception("Неудачный парс");
                 secondsCount++;
                 goto parse2;
@@ -292,7 +292,7 @@ namespace ShopScoutWebApplication.Models
             if (productCountString == "" || productCountString == "0")
             {
                 Task.Delay(1000).Wait();
-                if (secondsCount == 10)
+                if (secondsCount == SECONDS_BEFORE_TIMEOUT)
                     throw new Exception("Неудачный парс");
                 secondsCount++;
                 goto parse2;

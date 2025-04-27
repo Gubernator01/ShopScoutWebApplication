@@ -15,11 +15,11 @@ namespace ShopScoutWebApplication.Controllers
         private IProductsDBController productsDBController;
         private List<MarketParser> marketParsers;
         private ParseController() { }
-        public ParseController(ILoggerFactory loggerFactory, IProductsDBController productsDBController)
+        public ParseController(ILoggerFactory loggerFactory, IProductsDBController productsDBController, IConfiguration Configuration)
         {
             logger = loggerFactory.CreateLogger<ParseController>();
             this.productsDBController = productsDBController;
-            marketParsers = [new OzonParser(), new WildberriesParser()];
+            marketParsers = [new OzonParser(Configuration), new WildberriesParser(Configuration)];
         }
         /// <summary>
         /// Асинхронно получить список товаров из магазинов
