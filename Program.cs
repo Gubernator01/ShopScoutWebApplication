@@ -3,6 +3,7 @@ using CefSharp;
 using ShopScoutWebApplication.Controllers;
 using ShopScoutWebApplication;
 using ShopScoutWebApplication.Models;
+using System.Net;
 
 internal class Program
 {
@@ -44,8 +45,12 @@ internal class Program
             await Task.Run(() =>
             {
                 var logger = context.RequestServices.GetService<ILogger<Program>>();
+                string RemoteIpAddressString = "";
+                if (context.Connection.RemoteIpAddress != null)
+                    RemoteIpAddressString = context.Connection.RemoteIpAddress.ToString();
                 if (logger != null)
-                    logger.LogInformation($"|{DateTime.Now}| Connection: RemoteIpAddress:{context.Connection.RemoteIpAddress}, X-Real-IP:{context.Request.Headers["X-Real-IP"]},  X-Forwarded-For:{context.Request.Headers["X-Forwarded-For"]}, RemotePort:{context.Connection.RemotePort}, LocalIpAddress:{context.Connection.LocalIpAddress}, LocalPort:{context.Connection.LocalPort}, Path:{context.Request.Path}");
+                    if (RemoteIpAddressString != "127.0.0.1" || (RemoteIpAddressString == "127.0.0.1" && context.Request.Path != "/api/v1/"))
+                        logger.LogInformation($"|{DateTime.Now}| Connection: RemoteIpAddress:{context.Connection.RemoteIpAddress}, X-Real-IP:{context.Request.Headers["X-Real-IP"]},  X-Forwarded-For:{context.Request.Headers["X-Forwarded-For"]}, RemotePort:{context.Connection.RemotePort}, LocalIpAddress:{context.Connection.LocalIpAddress}, LocalPort:{context.Connection.LocalPort}, Path:{context.Request.Path}");
             });
             await next.Invoke();
         });

@@ -1,18 +1,19 @@
 ﻿using CefSharp;
 using CefSharp.DevTools.FedCm;
+using CefSharp.DevTools.Network;
 using System;
 
 namespace ShopScoutWebApplication.Models
 {
     public class OzonParser : MarketParser
     {
-        // todo что-то изенилось на сайте, надо поменять парсер
         public OzonParser(IConfiguration Configuration) : base(Configuration)
         {
             baseAddress = "https://www.ozon.ru";
         }
         public override IEnumerable<Product> Parse(string searchText, Sort sort)
         {
+            // На сайте пропала строка с количеством найденных товаров и скрипты пришлось изменить, предыдущую версию скриптов можно найти в коммите ad7f47a и ранних
             List<Product> products = new List<Product>();
             string preparedSearchText = searchText.Trim();
             preparedSearchText = preparedSearchText.Replace(' ', '+');
@@ -41,15 +42,15 @@ namespace ShopScoutWebApplication.Models
             int secondsCount = 0;
             var script = @"
                     (function(){
-                        const fulltextResultsHeader = document.querySelector('[data-widget=""fulltextResultsHeader""]');
+                        const contentScrollPaginator = document.getElementById('contentScrollPaginator');
                         const searchResultsError = document.querySelector('[data-widget=""searchResultsError""]');
-                        let result = """";
-                        if(fulltextResultsHeader != null) {
-                            result = fulltextResultsHeader.childNodes[0].textContent;
+                        let result;
+                        if(contentScrollPaginator != null) {
+                            result = contentScrollPaginator.childNodes.length;
                             return result; 
                         }
                         if(searchResultsError != null) {
-                            result = searchResultsError.childNodes[2].childNodes[0].textContent;
+                            result = 0;
                             return result; 
                         }
                         return null;
@@ -65,39 +66,24 @@ namespace ShopScoutWebApplication.Models
                 secondsCount++;
                 goto parse1;
             }
-            
-            string firstTaskResult = (string)scriptTask.Result.Result;
-            var firstTaskResultSplited = firstTaskResult.Split([' ', '\u2009', '\u00A0']);
-            string? productCountString = "";
-            foreach (var item in firstTaskResultSplited)                       // Парс количества товаров в результате поиска
-            {
-                if (int.TryParse(item, out int _))
-                {
-                    productCountString += item;
-                }
-                else
-                {
-                    productCountString += " ";
-                }
-            }
-            productCountString = productCountString.Split(' ', StringSplitOptions.RemoveEmptyEntries).LastOrDefault();
 
-            if (string.IsNullOrWhiteSpace(productCountString))                 // Если ничего нет, то возвращается пустой список
+            int firstTaskResult = (int)scriptTask.Result.Result;
+            if (firstTaskResult == 0)                                                   // Если ничего нет, то возвращается пустой список
             {
                 return products;
             }
-            var productCount = int.Parse(productCountString);                  // Доступное количество товаров
 
+            int attemptsCount = 0;
+            int lastProductsCount = 0;
             secondsCount = 0;
-            List<string> exceptionalProductsURI = new List<string>();
             script = @"
                     (function(){
                         var result = [];
                             const contentScrollPaginator = document.getElementById('contentScrollPaginator');
-                            let searchResultsV2s = contentScrollPaginator.querySelectorAll('[data-widget=""searchResultsV2""]');
-                            for (let searchResultsV2 of searchResultsV2s)
+                            let tileGridDesktops = contentScrollPaginator.querySelectorAll('[data-widget=""tileGridDesktop""]');
+                            for (let tileGridDesktop of tileGridDesktops)
                             {
-                                let cards = searchResultsV2.querySelectorAll('[data-index]')
+                                let cards = tileGridDesktop.querySelectorAll('[data-index]')
                                 for(let card of cards) {
                                     let imageURI = card.childNodes[0];
                                     imageURI = imageURI.querySelector('img');
@@ -202,8 +188,6 @@ namespace ShopScoutWebApplication.Models
                 }
                 catch (Exception)
                 {
-                    if (!exceptionalProductsURI.Contains(ProductURI))
-                        exceptionalProductsURI.Add(ProductURI);
                     continue;
                 }
             }
@@ -211,9 +195,14 @@ namespace ShopScoutWebApplication.Models
             .GroupBy(p => p.ProductURI)
             .Select(g => g.First())
             .ToList();
-            if (products.Count < productCount - exceptionalProductsURI.Count && products.Count < REQUIRED_QUANTITY_OF_PRODUCTS)// Парcится пока есть что парсить и не достиг необходимого количества
+            if (lastProductsCount == products.Count)
+                attemptsCount++;
+            else
+                attemptsCount = 0;
+            lastProductsCount = products.Count;
+            if (products.Count < REQUIRED_QUANTITY_OF_PRODUCTS && attemptsCount != SECONDS_BEFORE_TIMEOUT)// Парcится пока не достиг необходимого количества и не было таймаута
             {
-                Task.Delay(500).Wait();
+                Task.Delay(1000).Wait();
                 goto parse2;
             }
             browser.Dispose();

@@ -117,9 +117,7 @@ namespace ShopScoutWebApplication.Controllers
             IEnumerable<Product> result;
             try
             {
-                var task = Task.Run(() => marketParser.Parse(searchText, sort));
-                await task;
-                result = task.Result;
+                result = await Task.Run(() => marketParser.Parse(searchText, sort));
             }
             catch (Exception e)
             {
