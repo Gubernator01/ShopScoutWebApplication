@@ -6,6 +6,7 @@ namespace ShopScoutWebApplication.Models
 {
     public class OzonParser : MarketParser
     {
+        // todo что-то изенилось на сайте, надо поменять парсер
         public OzonParser(IConfiguration Configuration) : base(Configuration)
         {
             baseAddress = "https://www.ozon.ru";
@@ -65,7 +66,7 @@ namespace ShopScoutWebApplication.Models
                 goto parse1;
             }
             
-            string firstTaskResult = (string)scriptTask.Result.Result; Console.WriteLine("\n\n\n\n" + firstTaskResult + "\n\n\n\n");
+            string firstTaskResult = (string)scriptTask.Result.Result;
             var firstTaskResultSplited = firstTaskResult.Split([' ', '\u2009', '\u00A0']);
             string? productCountString = "";
             foreach (var item in firstTaskResultSplited)                       // Парс количества товаров в результате поиска

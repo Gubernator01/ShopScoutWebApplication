@@ -22,7 +22,7 @@ internal class Program
         builder.Services.AddMemoryCache();
         builder.Services.AddControllersWithViews();
         builder.Services.AddSingleton<IProductSorter, ProductSorter>();
-        builder.Services.AddTransient<IProductsDBController, EmptyProductsDBController>();
+        builder.Services.AddTransient<IProductsDBController, PostgresProductsDBController>();
         builder.Services.AddSingleton<IParseController, ParseController>();
 
         var app = builder.Build();
