@@ -57,7 +57,10 @@ internal class Program
 
 
 
+        var bot = new TelegramBot(app.Services.GetService<ILoggerFactory>(), app.Services.GetService<IConfiguration>());                         // инициализация бота
+        bot.Start();
         app.Run();
+        bot.Stop();
         Cef.Shutdown();
     }
 }

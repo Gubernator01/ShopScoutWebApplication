@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ShopScoutWebApplication.Models;
 using ShopScoutWebApplication.Models.DBContext;
+using System.Collections.Generic;
 
 namespace ShopScoutWebApplication.Controllers
 {
@@ -65,24 +66,23 @@ namespace ShopScoutWebApplication.Controllers
         /// </summary>
         private void DeleteExpiredRequests()
         {
+            List<int> expiredRequestIDs = new List<int>();
             using (var db = new PostgresDBContext(connectionString))
             {
-                var removedRequests = new List<Request>();
-                foreach (var request in db.Requests)
-                {
-                    if (DateTime.Now.ToUniversalTime() - request.Created >= timeBeforeExpiration)
-                    {
-                        db.Products.ToList().RemoveAll((p) => p.RequestId == request.Id);
-                        removedRequests.Add(request);
-                    }
-                }
-                if (removedRequests.Count > 0)
-                {
-                    db.Requests.RemoveRange(removedRequests);
-                    db.SaveChanges();
-                    logger.LogInformation($"Из базы было удалено {removedRequests.Count} кэшированных запросов");
-                }
+                expiredRequestIDs.AddRange(db.Requests.Where(r => (DateTime.Now.ToUniversalTime() - r.Created) >= timeBeforeExpiration).Select(r => r.Id));
             }
+            using (var db = new PostgresDBContext(connectionString))
+            {
+                db.Products.RemoveRange(db.Products.Where(p => expiredRequestIDs.Contains(p.RequestId)));
+                db.SaveChanges();
+            }
+            using (var db = new PostgresDBContext(connectionString))
+            {
+                db.Requests.RemoveRange(db.Requests.Where(r => expiredRequestIDs.Contains(r.Id)));
+                db.SaveChanges();
+            }
+            if (expiredRequestIDs.Count > 0)
+                logger.LogInformation($"Из базы было удалено {expiredRequestIDs.Count()} кэшированных запросов");
         }
     }
 }
