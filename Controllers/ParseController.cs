@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ShopScoutWebApplication.Models;
+using ShopScoutWebApplication.Models.Parsers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace ShopScoutWebApplication.Controllers
         {
             logger = loggerFactory.CreateLogger<ParseController>();
             this.productsDBController = productsDBController;
-            marketParsers = [new OzonParser(Configuration), new WildberriesParser(Configuration)];
+            marketParsers = [new OzonParser(Configuration), new WildberriesParser(Configuration), new DNSParser(Configuration)];
         }
         /// <summary>
         /// Асинхронно получить список товаров из магазинов
@@ -108,6 +109,9 @@ namespace ShopScoutWebApplication.Controllers
                     break;
                 case MarketName.Wildberries:
                     marketParser = marketParsers.FirstOrDefault((m) => m is WildberriesParser);
+                    break;
+                case MarketName.DNS:
+                    marketParser = marketParsers.FirstOrDefault((m) => m is DNSParser);
                     break;
                 default:
                     throw new ArgumentException("Парсер для указанного магазина не определен", nameof(marketName));

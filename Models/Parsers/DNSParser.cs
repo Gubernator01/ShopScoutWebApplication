@@ -1,77 +1,63 @@
-﻿using CefSharp;
+﻿
+using CefSharp;
+using CefSharp.DevTools.Page;
 
-namespace ShopScoutWebApplication.Models
+namespace ShopScoutWebApplication.Models.Parsers
 {
-    public class WildberriesParser : MarketParser
+    public class DNSParser : MarketParser
     {
-        protected const int PRODUCTS_IN_ONE_PAGE = 100;
-        public WildberriesParser(IConfiguration Configuration) : base(Configuration)
+        protected const int PRODUCTS_IN_ONE_PAGE = 18;
+        public DNSParser(IConfiguration Configuration) : base(Configuration)
         {
-            baseAddress = "https://www.wildberries.ru";
+            baseAddress = "https://www.dns-shop.ru";
         }
+
         public override IEnumerable<Product> Parse(string searchText, Sort sort)
         {
             List<Product> products = new List<Product>();
             string preparedSearchText = searchText.Trim();
             preparedSearchText = preparedSearchText.Replace(' ', '+');
-            preparedSearchText = "search=" + preparedSearchText;
+            preparedSearchText = "q=" + preparedSearchText;
             switch (sort)
             {
                 case Sort.Popular:
-                    preparedSearchText = "sort=popular&" + preparedSearchText;
                     break;
                 case Sort.ByPriceDescending:
-                    preparedSearchText = "sort=pricedown&" + preparedSearchText;
+                    preparedSearchText = "order=price-desc&" + preparedSearchText;
                     break;
                 case Sort.ByPriceAscending:
-                    preparedSearchText = "sort=priceup&" + preparedSearchText;
+                    preparedSearchText = "order=price-asc&" + preparedSearchText;
                     break;
                 case Sort.ByRating:
-                    preparedSearchText = "sort=rate&" + preparedSearchText;
+                    preparedSearchText = "order=rating&" + preparedSearchText;
                     break;
                 default:
                     break;
             }
-            var FirstPartOfURL = baseAddress + "/catalog/0/search.aspx?";
+            var FirstPartOfURL = baseAddress + "/search/?stock=now-today-tomorrow-later&";
 
             try
             {
-                var scrollDownScript = @"
-                    (function(){
-                        window.scrollBy({ top: 10000, left: 0});
-                        const cards = document.querySelectorAll('[data-card-index]');
-                        return cards.length; 
-                      })()";
-                var scrollUpScript = @"
-                    (function(){
-                        window.scrollBy({ top: -100, left: 0});
-                        return window.pageYOffset; 
-                      })()";
                 var parseScript = @"
                     (function(){
                         var result = [];
-                        const cards = document.querySelectorAll('[data-card-index]');
+                        const cards = document.querySelectorAll('div.catalog-product');
                             for(let card of cards) {
-                                let card_wrapper = card.querySelector('.product-card__wrapper');
-                                let productURI = card_wrapper.querySelector('a.product-card__link');
-                                let name = productURI.getAttribute('aria-label');
-                                productURI = productURI.getAttribute('href');
+                                let productURN = card.querySelector('a.catalog-product__name');
+                                let name = productURN.textContent;
+                                productURN = productURN.getAttribute('href');
                                 let imageURI = card.querySelector('img');
-                                imageURI = imageURI.getAttribute('src');
-                                let price = card.querySelector('div.product-card__price');
-                                price = price.querySelector('ins');
+                                imageURI = imageURI.getAttribute('data-src');
+                                let price = card.querySelector('div.product-buy__price');
                                 price = price.textContent;
-                                let rating = card.querySelector('p.product-card__rating-wrap');
-                                let reviews = rating.querySelector('span.product-card__count');
-                                rating = rating.querySelector('span.address-rate-mini');
+                                let rating = card.querySelector('a.catalog-product__rating');
                                 rating = rating.textContent;
-                                reviews = reviews.textContent;
                                 var product = {
                                     Name: name,
                                     Price: price,
-                                    ReviewsCount: reviews,
+                                    ReviewsCount: rating,
                                     Rating: rating,
-                                    ProductURI: productURI,
+                                    ProductURN: productURN,
                                     ProductImageURI: imageURI,
                                 };
                                 result.push(product);
@@ -86,7 +72,7 @@ namespace ShopScoutWebApplication.Models
                 if (page == 1)
                     URL = FirstPartOfURL + preparedSearchText;
                 else
-                    URL = FirstPartOfURL + "page=" + page + "&" + preparedSearchText;
+                    URL = FirstPartOfURL + "p=" + page + "&" + preparedSearchText;
                 productCount = FirstLoadOfPage(URL);                                     // Ожидание прогрузки страницы
                 if (productCount == 0) return products;
                 int remainingProductCount = productCount - PRODUCTS_IN_ONE_PAGE * (page - 1);
@@ -102,37 +88,8 @@ namespace ShopScoutWebApplication.Models
                     expectedProductCount = remainingProductCount;
                 if (expectedProductCount <= 0) return products;
                 secondsCount = 0;
-                int oldScrollScriptResponse = -1;
             parse:
-                var scriptTask = browser.EvaluateScriptAsync(scrollDownScript);              // Проматывание страницы
-                scriptTask.Wait();
-                if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null)
-                {
-                    Task.Delay(1000).Wait();
-                    if (secondsCount == SECONDS_BEFORE_TIMEOUT)                              // Совершается несколько попыток с паузой в секунду для загрузки страницы
-                        throw new Exception("Неудачный парс");
-                    secondsCount++;
-                    goto parse;
-                }
-                var scrollScriptResponse = (int)scriptTask.Result.Result;
-
-                if (scrollScriptResponse < expectedProductCount)
-                {
-                    Task.Delay(100).Wait();
-                    if (oldScrollScriptResponse == scrollScriptResponse)
-                        while (true)
-                        {
-                            Task.Delay(100).Wait();
-                            scriptTask = browser.EvaluateScriptAsync(scrollUpScript);
-                            scriptTask.Wait();
-                            if ((int)scriptTask.Result.Result == 0)
-                                break;
-                        }
-                    oldScrollScriptResponse = scrollScriptResponse;
-                    goto parse;
-                }
-
-                scriptTask = browser.EvaluateScriptAsync(parseScript);
+                var scriptTask = browser.EvaluateScriptAsync(parseScript);
                 scriptTask.Wait();
                 if (!(scriptTask.Result.Success) || scriptTask.Result.Result == null || ((List<dynamic>)scriptTask.Result.Result).Count == 0)
                 {
@@ -148,7 +105,7 @@ namespace ShopScoutWebApplication.Models
                 foreach (var rawProduct in parseScriptResponse)
                 {
                     string Name = rawProduct.Name;
-                    string ProductURI = rawProduct.ProductURI;
+                    string ProductURI = baseAddress + rawProduct.ProductURN;
                     string ProductImageURI = rawProduct.ProductImageURI;
                     try                                                                  // Полученный список сырой информации парсится в необходимый формат
                     {
@@ -160,11 +117,10 @@ namespace ShopScoutWebApplication.Models
                                 PriceString += p;
                         }
                         Price = uint.Parse(PriceString);
-
                         uint? ReviewsCount;
                         string ReviewsString = "";
                         if (rawProduct.ReviewsCount != null)
-                            foreach (var p in ((string)rawProduct.ReviewsCount).Split([' ', '\u2009', '\u00A0'], StringSplitOptions.RemoveEmptyEntries))
+                            foreach (var p in ((string)rawProduct.ReviewsCount).Split('|', StringSplitOptions.RemoveEmptyEntries)[1].Split([' ', '\u2009', '\u00A0'], StringSplitOptions.RemoveEmptyEntries))
                             {
                                 if (uint.TryParse(p, out uint _))
                                 {
@@ -183,7 +139,7 @@ namespace ShopScoutWebApplication.Models
                         float? Rating;
                         string RatingString = "";
                         if (rawProduct.Rating != null)
-                            RatingString = (string)rawProduct.Rating;
+                            RatingString = ((string)rawProduct.Rating).Split('|', StringSplitOptions.RemoveEmptyEntries)[0].Split([' ', '\u2009', '\u00A0'], StringSplitOptions.RemoveEmptyEntries)[0];
                         RatingString = RatingString.Replace('.', ',');
                         if (float.TryParse(RatingString, out float rating))
                         {
@@ -193,8 +149,7 @@ namespace ShopScoutWebApplication.Models
                         {
                             Rating = null;
                         }
-
-                        var product = new Product { Name = Name, Price = Price, ReviewsCount = ReviewsCount, Rating = Rating, MarketName = MarketName.Wildberries, ProductURI = ProductURI, ProductImageURI = ProductImageURI };
+                        var product = new Product { Name = Name, Price = Price, ReviewsCount = ReviewsCount, Rating = Rating, MarketName = MarketName.DNS, ProductURI = ProductURI, ProductImageURI = ProductImageURI };
                         products.Add(product);                                           // Итоговый товар
                     }
                     catch (Exception)
@@ -223,7 +178,6 @@ namespace ShopScoutWebApplication.Models
             browser = new CefSharp.OffScreen.ChromiumWebBrowser();
             return products;
         }
-
         private int FirstLoadOfPage(string URL)
         {
             Task.WaitAny(browser.LoadUrlAsync(URL), Task.Delay(10000));
@@ -231,8 +185,8 @@ namespace ShopScoutWebApplication.Models
             int secondsCount = 0;
             var script = @"
                     (function(){
-                        const not_found_results = document.querySelector('div.catalog-page__not-found');
-                        const searching_results = document.querySelector('span.searching-results__count');
+                        const not_found_results = document.querySelector('div.empty-search-results');
+                        const searching_results = document.querySelector('span.products-count');
                         if(not_found_results != null) {
                             return false; 
                         }
@@ -258,7 +212,7 @@ namespace ShopScoutWebApplication.Models
             secondsCount = 0;
             script = @"
                     (function(){
-                        const searching_results = document.querySelector('span.searching-results__count');
+                        const searching_results = document.querySelector('span.products-count');
                         let result = """";
                         if(searching_results != null) {
                             result = searching_results.textContent;
@@ -279,13 +233,17 @@ namespace ShopScoutWebApplication.Models
             }
 
             string taskResult = (string)scriptTask.Result.Result;
-            var firstTaskResultSplited = taskResult.Split([' ', '\u2009', '\u00A0']);
+            var firstTaskResultSplited = taskResult.Split([' ', '\u2009', '\u00A0'], StringSplitOptions.RemoveEmptyEntries);
             string productCountString = "";
             foreach (var item in firstTaskResultSplited)                       // Парс количества товаров в результате поиска
             {
                 if (int.TryParse(item, out int _))
                 {
                     productCountString += item;
+                }
+                else
+                {
+                    break;
                 }
             }
 

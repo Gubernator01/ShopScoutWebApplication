@@ -5,8 +5,9 @@
     /// </summary>
     public enum MarketName
     {
-        Ozon = 0, // todo добавить магазинов
-        Wildberries = 1
+        Ozon = 0,
+        Wildberries = 1,
+        DNS = 2
     }
     /// <summary>
     /// Способ сортировки

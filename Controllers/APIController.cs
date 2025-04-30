@@ -21,25 +21,26 @@ namespace ShopScoutWebApplication.Controllers
             if (!int.TryParse(Configuration["Cache:ExpirationTimeInMinutes"], out cacheExpirationTime))
                 cacheExpirationTime = 30;
         }
-        public async Task<IResult> v1(string text, bool ozon, bool wb, Sort sort, int page, int count)
+        public async Task<IResult> v1(string text, bool ozon, bool wb, bool dns, Sort sort, int page, int count)
         {
             List<Product> resultProducts = new List<Product>();                          // Результирующая коллекция
             if (count <= 0 || page < 0 || string.IsNullOrWhiteSpace(text))
             {
-                logger.LogError($"Получен неверный запрос \"{text}, ozon:{ozon}, wb:{wb}, sort:{sort}\"");
+                logger.LogError($"Получен неверный запрос \"{text}, ozon:{ozon}, wb:{wb}, dns:{dns}, sort:{sort}\"");
                 Response.StatusCode = 400;
                 return Results.Json(new APIV1Results(resultProducts.Count, resultProducts));
             }
             List<Product> cacheProducts = new List<Product>();                           // Рабочая коллекция, должна быть закэширована
             int offset = page * count;                                                   // Смещение индекса коллекции с начала
             text = text.ToLower();
-            string keyString = text + ozon + wb + sort;
+            string keyString = text + ozon + wb + dns + sort;
             if (!memoryCache.TryGetValue(keyString, out cacheProducts))                  // Если в кэше не найден запрос, то он парсится, сортируется и кэшируется
             {
-                logger.LogWarning($"Запрос \"{text}, ozon:{ozon}, wb:{wb}, sort:{sort}\" не найден в кэше");
+                logger.LogWarning($"Запрос \"{text}, ozon:{ozon}, wb:{wb}, dns:{dns}, sort:{sort}\" не найден в кэше");
                 var markets = new List<MarketName>();
                 if (ozon) markets.Add(MarketName.Ozon);
                 if (wb) markets.Add(MarketName.Wildberries);
+                if (dns) markets.Add(MarketName.DNS);
                 cacheProducts = (await parseController.ParseAsync(text, sort, markets.ToArray())).ToList();
                 cacheProducts = (await Task.Run(() => productSorter.Sort(cacheProducts, sort))).ToList();
                 memoryCache.Set(keyString, cacheProducts, new MemoryCacheEntryOptions

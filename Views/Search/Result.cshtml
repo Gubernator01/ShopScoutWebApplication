@@ -11,6 +11,7 @@
         string text = (string)ViewBag.text;
         bool ozon = (bool)ViewBag.ozon;
         bool wb = (bool)ViewBag.wb;
+        bool dns = (bool)ViewBag.dns;
         Sort sort = (Sort)ViewBag.sort;
         int count = (int)ViewBag.count;
         int currentPage = (int)ViewBag.page;
@@ -62,6 +63,9 @@
                                             case MarketName.Wildberries:
                                                 <img src="~/icons/wb.ico" alt="@MarketName.Wildberries" width="16" height="16">
                                                 break;
+                                            case MarketName.DNS:
+                                                <img src="~/icons/dns.ico" alt="@MarketName.DNS" width="16" height="16">
+                                                break;
                                             default:
                                                 <img src="~/favicon.ico" width="16" height="16">
                                                 break;
@@ -93,6 +97,7 @@
             <input type="hidden" value="@text" name="text" />
             <input type="hidden" value="@ozon.ToString()" name="ozon" />
             <input type="hidden" value="@wb.ToString()" name="wb" />
+            <input type="hidden" value="@dns.ToString()" name="dns" />
             <input type="hidden" value="@sort" name="sort" />
             <input type="hidden" value="@nextPage" name="page" />
             <input type="hidden" value="@count" name="count" />
@@ -102,6 +107,7 @@
             <input type="hidden" value="@text" name="text" />
             <input type="hidden" value="@ozon.ToString()" name="ozon" />
             <input type="hidden" value="@wb.ToString()" name="wb" />
+            <input type="hidden" value="@dns.ToString()" name="dns" />
             <input type="hidden" value="@sort" name="sort" />
             <input type="hidden" value="@previousPage" name="page" />
             <input type="hidden" value="@count" name="count" />

@@ -23,13 +23,13 @@ namespace ShopScoutWebApplication.Controllers
         {
             return View();
         }
-        public async Task<IActionResult> Result(string text, bool ozon, bool wb, Sort sort, int page, int count)
+        public async Task<IActionResult> Result(string text, bool ozon, bool wb, bool dns, Sort sort, int page, int count)
         {
             if (GlobalVariables.SearchRequestsCount >= maxRequestsCount)
                 return View("Deny");
             if (string.IsNullOrWhiteSpace(text))
                 text = "";
-            string URL = APIURL + "/?text=" + text.Replace(" ", "+") + "&ozon=" + ozon + "&wb=" + wb + "&sort=" + sort + "&page=" + page + "&count=" + count;
+            string URL = APIURL + "/?text=" + text.Replace(" ", "+") + "&ozon=" + ozon + "&wb=" + wb + "&dns=" + dns + "&sort=" + sort + "&page=" + page + "&count=" + count;
             HttpResponseMessage? response = null;
             APIV1Results? results;
             GlobalVariables.SearchRequestsCount++;
@@ -49,6 +49,7 @@ namespace ShopScoutWebApplication.Controllers
             ViewBag.text = text;
             ViewBag.ozon = ozon;
             ViewBag.wb = wb;
+            ViewBag.dns = dns;
             ViewBag.sort = sort;
             ViewBag.page = page;
             ViewBag.count = count;

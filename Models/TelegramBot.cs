@@ -26,15 +26,17 @@ namespace ShopScoutWebApplication.Models
         private HttpClient httpClient;
         private const string APIURL = "http://127.0.0.1/api/v1";
         private int maxRequestsCount;
-        private const int STAGES_COUNT = 3;                                           // Не убирать из массивов
+        private const int STAGES_COUNT = 4;                                           // Не убирать из массивов
         private static readonly string[] messageTexts = new string[STAGES_COUNT]{
             "Осуществлять поиск в OZON?",
             "Осуществлять поиск в Wildberries?",
+            "Осуществлять поиск в DNS?",
             "Выберите способ сортировки:"
         };
         private static readonly string[] queryTextsParts = new string[STAGES_COUNT + 1]{
             "OZON: ",
             "Wildberries: ",
+            "DNS: ",
             "Сортировка: ",
             "Страница: "
         };
@@ -53,6 +55,11 @@ namespace ShopScoutWebApplication.Models
             "По рейтингу"
         };
         private readonly InlineKeyboardMarkup[] keyboardsForming = {
+            new(
+            new[] {
+                new[] { InlineKeyboardButton.WithCallbackData(keyboardTextYesNo[0]) },
+                new[] { InlineKeyboardButton.WithCallbackData(keyboardTextYesNo[1]) }
+            }),
             new(
             new[] {
                 new[] { InlineKeyboardButton.WithCallbackData(keyboardTextYesNo[0]) },
@@ -301,6 +308,7 @@ namespace ShopScoutWebApplication.Models
             string text = string.Empty;
             bool ozon = false;
             bool wb = false;
+            bool dns = false;
             Sort sort = Sort.Popular;
             int page = 0;
 
@@ -318,6 +326,11 @@ namespace ShopScoutWebApplication.Models
             else
                 wb = false;
             temp = textSplitted[3].Substring(queryTextsParts[2].Length);
+            if (temp == keyboardTextYesNo[0])
+                dns = true;
+            else
+                dns = false;
+            temp = textSplitted[4].Substring(queryTextsParts[3].Length);
             for (int i = 0; i < keyboardTextSort.Length; i++)
             {
                 if (keyboardTextSort[i] == temp)
@@ -326,7 +339,7 @@ namespace ShopScoutWebApplication.Models
                     break;
                 }
             }
-            temp = textSplitted[4].Substring(queryTextsParts[3].Length);
+            temp = textSplitted[5].Substring(queryTextsParts[4].Length);
             page = int.Parse(temp);
             if (query.Data == keyboardTextNextBack[0])
                 page++;
@@ -337,7 +350,7 @@ namespace ShopScoutWebApplication.Models
 
             if (string.IsNullOrWhiteSpace(text))
                 text = "";
-            string URL = APIURL + "/?text=" + text.Replace(" ", "+") + "&ozon=" + ozon + "&wb=" + wb + "&sort=" + sort + "&page=" + (page - 1) + "&count=" + maxCountOfProductsPerRequest;
+            string URL = APIURL + "/?text=" + text.Replace(" ", "+") + "&ozon=" + ozon + "&wb=" + wb + "&dns=" + dns + "&sort=" + sort + "&page=" + (page - 1) + "&count=" + maxCountOfProductsPerRequest;
             HttpResponseMessage? response = null;
             APIV1Results? results;
             GlobalVariables.SearchRequestsCount++;

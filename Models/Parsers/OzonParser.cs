@@ -37,7 +37,7 @@ namespace ShopScoutWebApplication.Models
             }
             var URL = baseAddress + "/search/?" + preparedSearchText;
 
-            browser.LoadUrlAsync(URL).Wait();
+            Task.WaitAny(browser.LoadUrlAsync(URL), Task.Delay(10000));
 
             int secondsCount = 0;
             var script = @"

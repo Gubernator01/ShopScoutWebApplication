@@ -16,7 +16,6 @@ internal class Program
             AcceptLanguageList = "ru-RU,ru;q=0.9",
             UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
         };
-        settings.DisableGpuAcceleration();
         Cef.Initialize(settings, performDependencyCheck: false);
 
         var builder = WebApplication.CreateBuilder(args);                         // инициализация самого приложения
